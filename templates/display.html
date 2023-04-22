@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Uploaded Image</title>
+  </head>
+  <body>
+    <div>
+      <div>
+        <h1>Uploaded Image</h1>
+        <img
+          src="{{ imageURL }}"
+          alt="Uploaded Image"
+          width="50%"
+          length="50%"
+        />
+      </div>
+
+      <div>
+        <h1>Result of Detection</h1>
+        <ul>
+          {% for tag, confidence in tags.items() %}
+          <li>{{ tag }}: {{ confidence }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>
