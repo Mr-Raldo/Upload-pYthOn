@@ -1,17 +1,16 @@
-import requests
+import json
 import os
 
+import requests
+from dotenv import load_dotenv
 from flask import Flask, render_template, request
-import urllib.request
-import json
+from loguru import logger
 
+load_dotenv()
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
-api_key = 'acc_b39a71a9380336a'
-api_secret = 'a6f64ed2a3df99d24dfa1d4eb3ba92ec'
-
-
-
+api_key = os.getenv('API_KEY')
+api_secret = os.getenv('API_SECRET')
 
 
 app = Flask(__name__)
@@ -19,15 +18,14 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", status=None)
+
 
 @app.route("/upload", methods=["POST"])
 def upload():
-    tag_dict = {}
-    
-    target = os.path.join(APP_ROOT, 'static/')
+    target =  os.path.join(APP_ROOT, 'static/uploads/')
 
-    if not os.path.isdir(target):
+    if not os.path.isdir(os.path.join(APP_ROOT, 'static/uploads/')):
         os.mkdir(target)
 
     file = request.files['file']
@@ -35,43 +33,17 @@ def upload():
     destination = "/".join([target, filename])
     file.save(destination)
 
-    imageURL = request.host_url + 'static/' + filename
+    image_url = f'{request.host_url}static/uploads/{filename}'
 
-    image_url = imageURL
-
-    response = requests.get(
-        'https://api.imagga.com/v2/tags?image_url=%s' % image_url,
-        auth=(api_key, api_secret))
-
+    response = requests.get(f'https://api.imagga.com/v2/tags?image_url={image_url}',auth=(api_key, api_secret))
+    response = response.json()
     
+    if response['status']['type'] == 'error':
+        return render_template('index.html', image_url=None, tags=None, status=response['status']['text'])
     
-   
-    
-    while (response.json()['status']['type'] == 'error'):
-        print(response.json())
-        # for tag in tags:
-        #     tags['tag'] = tag['confidence']
-        #     print(tags)  
-            
-        if (response.json()['status']['type'] == 'success'):
-            print(response.json())
-            # tags = response.json()
-            # for tag in tags:
-            #     tags['tag'] = tag['confidence']
-            # print(tags)  
-            break
-    
-        
-   
-    return render_template('display.html', image_url=image_url)
-
-
-
-
+    else:
+        return render_template('display.html', image_url=image_url, tags=response['result']['tags'] )
 
 
 if __name__ == "__main__":
     app.run(debug="true")
-
-
-
